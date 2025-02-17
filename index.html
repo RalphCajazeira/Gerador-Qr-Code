@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Gerador de QR Code Dinâmico</title>
+
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 600px;
+        margin: 20px auto;
+        text-align: center;
+      }
+
+      h1 {
+        margin-bottom: 20px;
+      }
+
+      .input-field {
+        margin-bottom: 10px;
+      }
+
+      .color-field {
+        margin-bottom: 15px;
+      }
+
+      label {
+        display: inline-block;
+        width: 120px;
+        text-align: right;
+        margin-right: 10px;
+        font-weight: bold;
+      }
+
+      input[type="text"],
+      input[type="color"] {
+        width: 300px;
+        max-width: 100%;
+        padding: 6px;
+      }
+
+      button {
+        padding: 8px 16px;
+        cursor: pointer;
+        margin: 5px;
+      }
+
+      /* Container principal do QR + texto */
+      #qr-frame {
+        display: inline-block; /* para ficar só do tamanho necessário */
+        background-color: #000; /* cor de fundo inicial */
+        color: #fff; /* cor do texto inicial */
+        padding: 10px; /* espaçamento interno */
+        text-align: center;
+        margin-top: 30px;
+      }
+
+      /* Texto acima do QR Code */
+      #scan-text {
+        font-size: 20px;
+        font-weight: bold;
+        margin-bottom: 10px;
+      }
+
+      /* Área de fundo onde o QR Code fica */
+      .qrcode-wrapper {
+        background-color: #fff; /* cor clara inicial do QR */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 10px;
+        margin: 0 auto; /* centralizar */
+        width: 220px; /* ajuste conforme desejar */
+        height: 220px; /* ajuste conforme desejar */
+      }
+
+      #qrcode {
+        width: auto;
+        height: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Gerador de QR Code Dinâmico</h1>
+
+    <!-- Campos de entrada: URL e Texto -->
+    <div class="input-field">
+      <label for="url-input">URL:</label>
+      <input type="text" id="url-input" placeholder="Digite o endereço web" />
+    </div>
+    <div class="input-field">
+      <label for="scan-label-input">Texto:</label>
+      <input
+        type="text"
+        id="scan-label-input"
+        placeholder="Digite o texto (ex: SCAN ME)"
+      />
+    </div>
+
+    <!-- Campos de cor -->
+    <div class="color-field">
+      <label for="frameColor">Cor do quadro:</label>
+      <input type="color" id="frameColor" value="#000000" />
+    </div>
+    <div class="color-field">
+      <label for="textColor">Cor do texto:</label>
+      <input type="color" id="textColor" value="#ffffff" />
+    </div>
+    <div class="color-field">
+      <label for="colorDark">Cor escura (QR):</label>
+      <input type="color" id="colorDark" value="#000000" />
+    </div>
+    <div class="color-field">
+      <label for="colorLight">Cor clara (QR):</label>
+      <input type="color" id="colorLight" value="#ffffff" />
+    </div>
+
+    <!-- Botão de download -->
+    <button onclick="downloadQRCode()">Baixar Imagem</button>
+
+    <!-- Container final com o QR e texto -->
+    <div id="qr-frame">
+      <div id="scan-text">SCAN ME</div>
+      <div class="qrcode-wrapper" id="qrcode-wrapper">
+        <div id="qrcode"></div>
+      </div>
+    </div>
+
+    <!-- Biblioteca QRCode.js para gerar o código -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- Biblioteca html2canvas para "fotografar" o elemento -->
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
+    <script>
+      // Função que gera (ou atualiza) o QR Code
+      function updateQRCode() {
+        const urlValue = document.getElementById("url-input").value.trim();
+        const scanTextValue = document
+          .getElementById("scan-label-input")
+          .value.trim();
+        const frameColor = document.getElementById("frameColor").value;
+        const textColor = document.getElementById("textColor").value;
+        const darkColor = document.getElementById("colorDark").value;
+        const lightColor = document.getElementById("colorLight").value;
+
+        // Ajusta cores e texto do quadro
+        const qrFrame = document.getElementById("qr-frame");
+        qrFrame.style.backgroundColor = frameColor;
+        const scanText = document.getElementById("scan-text");
+        scanText.style.color = textColor;
+        scanText.textContent = scanTextValue || "SCAN ME";
+
+        // Ajusta a cor de fundo da "moldura" do QR
+        const qrWrapper = document.getElementById("qrcode-wrapper");
+        qrWrapper.style.backgroundColor = lightColor;
+
+        // Limpa QR anterior
+        const qrcodeContainer = document.getElementById("qrcode");
+        qrcodeContainer.innerHTML = "";
+
+        // Se não houver URL, não desenha nada (ou desenha um QR vazio)
+        if (!urlValue) return;
+
+        // Gera um novo QR Code com as cores desejadas
+        new QRCode(qrcodeContainer, {
+          text: urlValue,
+          width: 200,
+          height: 200,
+          colorDark: darkColor,
+          colorLight: lightColor,
+          correctLevel: QRCode.CorrectLevel.H,
+        });
+      }
+
+      // Função para baixar a imagem do #qr-frame inteiro
+      function downloadQRCode() {
+        const qrFrame = document.getElementById("qr-frame");
+        html2canvas(qrFrame).then((canvas) => {
+          const link = document.createElement("a");
+          link.href = canvas.toDataURL("image/png");
+          link.download = "qrcode.png";
+          link.click();
+        });
+      }
+
+      // Adiciona eventos para atualizar o QR "em tempo real"
+      const inputs = [
+        "url-input",
+        "scan-label-input",
+        "frameColor",
+        "textColor",
+        "colorDark",
+        "colorLight",
+      ];
+      inputs.forEach((id) => {
+        document.getElementById(id).addEventListener("input", updateQRCode);
+      });
+
+      // Gera o QR Code inicial (caso deseje iniciar vazio, basta não chamar aqui)
+      updateQRCode();
+    </script>
+  </body>
+</html>
